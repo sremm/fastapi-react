@@ -1,9 +1,10 @@
+import logging
 import pathlib
 import sys
+from logging.config import fileConfig
+
 import alembic
 from sqlalchemy import engine_from_config, pool
-from logging.config import fileConfig
-import logging
 
 # we're appending the app directory to our path here so that we can import config easily
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[3]))

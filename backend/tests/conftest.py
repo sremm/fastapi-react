@@ -1,12 +1,14 @@
-import warnings
 import os
+import warnings
+
+import alembic
 import pytest
+from alembic.config import Config
 from asgi_lifespan import LifespanManager
+from databases import Database
 from fastapi import FastAPI
 from httpx import AsyncClient
-from databases import Database
-import alembic
-from alembic.config import Config
+
 
 # Apply migrations at beginning and end of testing session
 @pytest.fixture(scope="session")

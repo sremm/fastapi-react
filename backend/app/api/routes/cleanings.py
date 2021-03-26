@@ -1,11 +1,11 @@
 from typing import List
 
+from fastapi import APIRouter, Body, Depends
+from starlette.status import HTTP_201_CREATED
+
 from app.api.dependencies.database import get_repository
 from app.db.repositories.cleanings import CleaningsRepository
 from app.models.cleaning import CleaningCreate, CleaningPublic
-
-from fastapi import APIRouter, Body, Depends
-from starlette.status import HTTP_201_CREATED
 
 router = APIRouter()
 
