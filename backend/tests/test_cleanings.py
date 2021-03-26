@@ -76,4 +76,4 @@ class TestGetCleanings:
 
         assert res.status_code == HTTP_200_OK
         cleaning = CleaningInDB(**res.json())
-        assert cleaning.id == test_cleaning.id
+        assert cleaning == test_cleaning
