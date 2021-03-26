@@ -1,8 +1,9 @@
 import pytest
-from app.models.cleaning import CleaningCreate
+from app.models.cleaning import CleaningCreate, CleaningInDB
 from fastapi import FastAPI
 from httpx import AsyncClient
 from starlette.status import (
+    HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_404_NOT_FOUND,
     HTTP_422_UNPROCESSABLE_ENTITY,
@@ -65,3 +66,12 @@ class TestCreateCleaning:
             json={"new_cleaning": invalid_payload},
         )
         assert res.status_code == status_code
+
+
+class TestGetCleanings:
+    async def test_fetch_by_id(self, app: FastAPI, client: AsyncClient):
+        res = await client.get(app.url_path_for("cleanings:get-cleaning-by-id", id=1))
+
+        assert res.status_code == HTTP_200_OK
+        cleaning = CleaningInDB(**res.json())
+        assert cleaning.id == 1
