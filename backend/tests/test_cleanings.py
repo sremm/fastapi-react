@@ -69,9 +69,11 @@ class TestCreateCleaning:
 
 
 class TestGetCleanings:
-    async def test_fetch_by_id(self, app: FastAPI, client: AsyncClient):
-        res = await client.get(app.url_path_for("cleanings:get-cleaning-by-id", id=1))
+    async def test_fetch_by_id(self, app: FastAPI, client: AsyncClient, test_cleaning):
+        res = await client.get(
+            app.url_path_for("cleanings:get-cleaning-by-id", id=test_cleaning.id)
+        )
 
         assert res.status_code == HTTP_200_OK
         cleaning = CleaningInDB(**res.json())
-        assert cleaning.id == 1
+        assert cleaning.id == test_cleaning.id
