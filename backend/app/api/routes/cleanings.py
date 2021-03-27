@@ -2,8 +2,13 @@ from typing import List
 
 from app.api.dependencies.database import get_repository
 from app.db.repositories.cleanings import CleaningsRepository
-from app.models.cleaning import CleaningCreate, CleaningInDB, CleaningPublic
-from fastapi import APIRouter, Body, Depends, HTTPException
+from app.models.cleaning import (
+    CleaningCreate,
+    CleaningInDB,
+    CleaningPublic,
+    CleaningUpdate,
+)
+from fastapi import APIRouter, Body, Depends, HTTPException, Path
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
 
 router = APIRouter()
@@ -51,3 +56,21 @@ async def create_new_cleaning(
 ) -> CleaningPublic:
     created_cleaning = await cleanings_repo.create_cleaning(new_cleaning=new_cleaning)
     return created_cleaning
+
+
+@router.put(
+    "/{id}/", response_model=CleaningPublic, name="cleanings:update-cleaning-by-id"
+)
+async def update_cleaning_by_id(
+    id: int = Path(..., ge=1, title="The ID of the cleaning to update."),
+    cleaning_update: CleaningUpdate = Body(..., embed=True),
+    cleanings_repo: CleaningsRepository = Depends(get_repository(CleaningsRepository)),
+) -> CleaningPublic:
+    updated_cleaning = await cleanings_repo.update_cleaning(
+        id=id, cleaning_update=cleaning_update
+    )
+    if not updated_cleaning:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND, detail="No cleaning found with that id."
+        )
+    return updated_cleaning
