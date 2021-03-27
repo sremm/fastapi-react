@@ -64,6 +64,12 @@ class CleaningsRepository(BaseRepository):
         cleaning_update_params = cleaning.copy(
             update=cleaning_update.dict(exclude_unset=True)
         )
+        if cleaning_update_params.cleaning_type is None:
+            raise HTTPException(
+                status_code=HTTP_400_BAD_REQUEST,
+                detail="Invalid cleaning type. Cannot be None.",
+            )
+
         try:
             updated_cleaning = await self.db.fetch_one(
                 query=UPDATE_CLEANING_BY_ID_QUERY, values=cleaning_update_params.dict()
