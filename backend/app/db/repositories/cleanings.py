@@ -2,6 +2,8 @@ from typing import List
 
 from app.db.repositories.base import BaseRepository
 from app.models.cleaning import CleaningCreate, CleaningInDB, CleaningUpdate
+from fastapi import HTTPException
+from starlette.status import HTTP_400_BAD_REQUEST
 
 CREATE_CLEANING_QUERY = """
     INSERT INTO cleanings (name, description, price, cleaning_type)
@@ -16,6 +18,16 @@ GET_CLEANING_BY_ID_QUERY = """
 GET_ALL_CLEANINGS_QUERY = """
     SELECT id, name, description, price, cleaning_type  
     FROM cleanings;  
+"""
+
+UPDATE_CLEANING_BY_ID_QUERY = """
+    UPDATE cleanings  
+    SET name         = :name,  
+        description  = :description,  
+        price        = :price,  
+        cleaning_type = :cleaning_type  
+    WHERE id = :id  
+    RETURNING id, name, description, price, cleaning_type;  
 """
 
 
@@ -42,3 +54,23 @@ class CleaningsRepository(BaseRepository):
     async def get_all_cleanings(self) -> List[CleaningInDB]:
         cleanings = await self.db.fetch_all(query=GET_ALL_CLEANINGS_QUERY)
         return [CleaningInDB(**cleaning) for cleaning in cleanings]
+
+    async def update_cleaning(
+        self, *, id: int, cleaning_update: CleaningUpdate
+    ) -> CleaningInDB:
+        cleaning = await self.get_cleaning_by_id(id=id)
+        if not cleaning:
+            return None
+        cleaning_update_params = cleaning.copy(
+            update=cleaning_update.dict(exclude_unset=True)
+        )
+        try:
+            updated_cleaning = await self.db.fetch_one(
+                query=UPDATE_CLEANING_BY_ID_QUERY, values=cleaning_update_params.dict()
+            )
+            return CleaningInDB(**updated_cleaning)
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=HTTP_400_BAD_REQUEST, detail="Invalid update params."
+            )
