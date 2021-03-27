@@ -9,23 +9,16 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
 router = APIRouter()
 
 
-@router.get("/")
-async def get_all_cleanings() -> List[dict]:
-    cleanings = [
-        {
-            "id": 1,
-            "name": "My House",
-            "cleaning_type": "full_clean",
-            "price_per_hour": 29.99,
-        },
-        {
-            "id": 2,
-            "name": "Someone else's house",
-            "cleaning_type": "spot_clean",
-            "price_per_hour": 19.99,
-        },
-    ]
-    return cleanings
+@router.get(
+    "/",
+    response_model=List[CleaningInDB],
+    name="cleanings:get-all-cleanings",
+    status_code=HTTP_200_OK,
+)
+async def get_all_cleanings(
+    cleanings_repo: CleaningsRepository = Depends(get_repository(CleaningsRepository)),
+) -> List[CleaningInDB]:
+    return await cleanings_repo.get_all_cleanings()
 
 
 @router.get(
