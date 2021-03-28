@@ -26,3 +26,6 @@ class AuthService:
 
     def hash_password(self, *, password: str, salt: str) -> str:
         return pwd_context.hash(password + salt)
+
+    def verify_password(self, *, password: str, salt: str, hashed_pw: str) -> bool:
+        return pwd_context.verify(password + salt, hashed_pw)
