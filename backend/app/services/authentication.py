@@ -1,17 +1,14 @@
 from datetime import datetime, timedelta
+from typing import Optional
 
 import bcrypt
 import jwt
-from app.core.config import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    JWT_ALGORITHM,
-    JWT_AUDIENCE,
-    JWT_TOKEN_PREFIX,
-    SECRET_KEY,
-)
+from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ALGORITHM, JWT_AUDIENCE, JWT_TOKEN_PREFIX, SECRET_KEY
 from app.models.token import JWTCreds, JWTMeta, JWTPayload
 from app.models.user import UserInDB, UserPasswordUpdate
+from fastapi import HTTPException, status
 from passlib.context import CryptContext
+from pydantic import ValidationError
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -25,9 +22,7 @@ class AuthException(BaseException):
 
 
 class AuthService:
-    def create_salt_and_hashed_password(
-        self, *, plaintext_password: str
-    ) -> UserPasswordUpdate:
+    def create_salt_and_hashed_password(self, *, plaintext_password: str) -> UserPasswordUpdate:
         salt = self.generate_salt()
         hashed_password = self.hash_password(password=plaintext_password, salt=salt)
         return UserPasswordUpdate(salt=salt, password=hashed_password)
@@ -63,7 +58,17 @@ class AuthService:
         )
         # NOTE - previous versions of pyjwt ("<2.0") returned the token as bytes insted of a string.
         # That is no longer the case and the `.decode("utf-8")` has been removed.
-        access_token = jwt.encode(
-            token_payload.dict(), secret_key, algorithm=JWT_ALGORITHM
-        )
+        access_token = jwt.encode(token_payload.dict(), secret_key, algorithm=JWT_ALGORITHM)
         return access_token
+
+    def get_username_from_token(self, *, token: str, secret_key: str) -> Optional[str]:
+        try:
+            decoded_token = jwt.decode(token, str(secret_key), audience=JWT_AUDIENCE, algorithms=[JWT_ALGORITHM])
+            payload = JWTPayload(**decoded_token)
+        except (jwt.PyJWTError, ValidationError):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate token credentials.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return payload.username
